@@ -102,6 +102,9 @@ class LogStash::Inputs::Elasticsearch < LogStash::Inputs::Base
   # SSL
   config :ssl, :validate => :boolean, :default => false
 
+  # SSL you may have a messed up cert bundle or if you’re hitting a non-verifiable SSL server then you’ll have to disable peer verification to make SSL work
+  config :ssl_verifypeer, :validate => :boolean, :default => true
+
   # SSL Certificate Authority file
   config :ca_file, :validate => :path
 
@@ -133,10 +136,13 @@ class LogStash::Inputs::Elasticsearch < LogStash::Inputs::Base
       @hosts
     end
 
-    if @ssl && @ca_file
-      transport_options[:ssl] = { :ca_file => @ca_file }
+    if @ssl
+      transport_options[:ssl] = { :verify => @ssl_verifypeer } 
+      if @ca_file
+       	transport_options[:ssl] = { :ca_file => @ca_file }
+      end
     end
-
+    
     @client = Elasticsearch::Client.new(:hosts => hosts, :transport_options => transport_options)
   end
 
